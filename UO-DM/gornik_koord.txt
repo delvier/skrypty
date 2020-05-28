@@ -1,0 +1,57 @@
+set *ivIlKordEx 4                      ; nalezy wpisac liczbe okresklajaca ilosc podanych koordynatow z ponizszczej listy
+
+repeat
+    if *ivKordEx = 1
+       {
+        set *ivPozX 2195
+        set *ivPozY 1196
+       }
+    if *ivKordEx = 2
+       {
+        set *ivPozX 2192
+        set *ivPozY 1196
+       }
+    if *ivKordEx = 3
+       {
+        set *ivPozX 2189
+        set *ivPozY 1196
+       }
+	if *ivKordEx = 4
+       {
+        set *ivPozX 2186
+        set *ivPozY 1196
+       }
+ if *ivKordEx = 5
+       {
+        set *ivPozX 2186
+        set *ivPozY 1193
+       }
+ if *ivKordEx = 6
+       {
+        set *ivPozX 2189
+        set *ivPozY 1193
+       }
+ if *ivKordEx = 7
+       {
+        set *ivPozX 2192
+        set *ivPozY 1193
+       }
+ if *ivKordEx = 8
+       {
+        set *ivPozX 2195
+        set *ivPozY 1193
+       }
+ if *ivKordEx = 9
+       {
+        set *ivPozX 2196
+        set *ivPozY 1190
+       }
+ if *ivKordEx = 10
+       {
+        set *ivPozX 2198
+        set *ivPozY 1186
+       }
+
+    wait 10
+until #false
+

@@ -1,0 +1,232 @@
+;Biedagornik. Nie obsluguje juczniaka, ale powinien miec krotsze odstepy miedzy kopaniem.
+set %ukrywanie 0
+set %limit 325
+set %magazynX 2203
+set %magazynY 1175
+set %mRudaX 610
+set %mRudaY 436
+set %mZamknijX 124
+set %mZamknijY 437
+set %koord 2
+set %dzwiek C:\Users\spray\Desktop\UO\alam.wav
+;---------------------------------------------------------------------------
+EVENT MACRO 32 0
+WAIT 2
+
+goto zmienMiejsce
+start:
+set %offx -2
+set %offy -2
+set %licz 0
+set %currentTile 0
+;---------------------------------------------------------------------------
+gosub getTile
+while #true
+{
+	while #weight <= %limit
+	  {
+	  if #enemyid <> N/A
+	  {
+		 sound %dzwiek
+		 wait 1
+	  }
+	  gosub find
+	  deletejournal
+	  set #ltargetx ( #charposx + %offx )
+	  set #ltargety ( #charposy + %offy )
+	  set #ltargetz #charposz
+	  set #LTARGETKIND 3
+	  set #ltargettile #TILETYPE
+	  set %jrnl #jindex
+	  event macro 17
+	  gosub czek
+	  if %licz >= 2 && %ukrywanie = 1
+		 {
+		 event macro 1 0 .um ukrywanie
+		 wait 1
+		 }
+	  }
+	gosub rozladuj
+}
+
+;----------------------------------------------------------------------------
+sub getTile
+  set #ltargetx ( #charposx + %offx )
+  set #ltargety ( #charposy + %offy )
+
+  Tile init noOverrides
+  Tile cnt #ltargetx #ltargety #cursKind
+  Tile Get #ltargetx #ltargety #tileCnt #cursKind
+  set #ltargettile #TILETYPE
+return
+
+sub offset
+  if %offx <= 1
+    set %offx %offx + 1
+  else
+    {
+    if %offy <= 1
+      {
+      set %offx -2
+      set %offy %offy + 1
+      }
+    else
+      {
+      event SysMessage NIE MA WIECEJ RUDY! Zmieniam miejsce
+	  goto zmienMiejsce
+      }
+    }
+   gosub getTile
+   event SysMessage Nastepne , #spc , %offx ,  #spc , %offy
+return
+
+sub czek
+    set %licz %licz + 1
+    set %czas #scnt + 4
+    while #scnt <= %czas
+          {
+          if #jindex > %jrnl
+             {
+             set %jrnl %jrnl + 1
+             scanjournal %jrnl
+             if Wybierz in #journal || #targcurs = 1
+               {
+               target 1s
+               while #targcurs = 1
+                  event macro 22
+               }
+             if Juz_cos in #journal
+               {
+               wait 1s
+               return
+               }
+             if Zaczynasz in #journal
+                {
+                set %bool #true
+                set %czas #scnt + 7
+                }
+             if Nie_znalazl in #journal || granit in #journal || Znalazl in #journal || Wydobyl in #journal || Nie_udalo in #journal || Wlozyl in #journal
+                return
+             if W_tym_miejscu in #journal || Tu_nic_nie_wykopiesz in #journal
+                {
+                gosub offset
+                return
+                }
+             if Zapisywanie in #journal
+                {
+                set %czas2 #scnt
+                set %czasz #scnt + 40
+                while #scnt < %czasz
+                   {
+                   if Stan_Swiata in #sysmsg
+                      {
+                      set %czas %czas + ( #scnt - %czas2 )
+                      break
+                      }
+                   }
+                }
+             }
+          }
+return
+
+sub find
+finditem NPF C_ , #charid
+if #FINDCNT > 0
+   {
+   set #lobjectid #findid
+   return
+   }
+else
+    {
+    finditem NPF C_ , #backpackid
+    if #FINDCNT > 0
+       {
+       exevent Drag #findid
+       wait 10
+       exevent Dropc #charid
+       set #lobjectid #findid
+       wait 10
+       return
+       }
+    else
+        {
+        sound %dzwiek
+        halt
+        }
+return
+
+sub ustawkord
+    set *ivKordEx %koord
+    wait 20                  ; czas na przeladowanie koordynatow w zewnetrznym pliku
+	event sysmessage Koordynat: %koord .Wyznaczone X: *ivPozX Y: *ivPozY
+return
+
+sub idzdoXY
+event pathfind %idzX %idzY #CHARPOSZ
+repeat
+{
+ set %lastX #CHARPOSX
+ set %lastY #CHARPOSY
+ wait 1s
+ event sysmessage X: %lastX Y: %lastY iX: %idzX iy: %idzY
+ gosub czyDotarl
+}
+until #CHARPOSX = %idzX && #CHARPOSY = %idzY
+event sysmessage Dotarlem do wyznaczonego punktu.
+return
+
+sub czyDotarl
+if %lastX = #CHARPOSX && %lastY = #CHARPOSY && ( #CHARPOSX <> %idzX || #CHARPOSY <> %idzY )
+{
+ event sysmessage CD X: %lastX Y: %lastY iX: %idzX iy: %idzY
+ gosub idzdoXY %idzX %idzY #CHARPOSZ
+}
+return
+
+sub magazyn
+	set %idzX %magazynX
+	set %idzY %magazynY
+	gosub idzdoXY
+	set #NEXTCPOSX 0
+	set #NEXTCPOSY 0
+	event macro 1 0 Pokaz mi moj magazyn
+	wait 1s
+	click %mRudaX %mRudaY
+	set #LTARGETID #BACKPACKID
+	set #LTARGETKIND 1
+	while #TARGCURS = 0
+	{
+		wait 1s
+	}
+	event macro 22
+	set #LTARGETX #CHARPOSX
+	set #LTARGETY #CHARPOSY
+	set #LTARGETKIND 3
+	wait 3s
+	event macro 22 0
+	wait 1s
+	click %mZamknijX %mZamknijY
+	wait 1s
+return
+
+sub rozladuj
+	set %tempX #CHARPOSX
+	set %tempY #CHARPOSY
+	gosub magazyn
+	wait 1s
+	set %idzX %tempX
+	set %idzY %tempY
+	gosub idzdoXY
+	wait 1s
+return
+
+zmienMiejsce:
+	gosub ustawkord %koord
+	set %idzX *ivPozX
+	set %idzY *ivPozY
+    gosub idzdoXY
+	set %koord %koord + 1
+goto start
+
+
+
